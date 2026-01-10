@@ -11,7 +11,6 @@ WORKDIR /migrations
 
 # Install runtime dependencies
 RUN apk add --no-cache \
-    postgresql-client \
     libpq
 
 # Install Alembic and database driver only
