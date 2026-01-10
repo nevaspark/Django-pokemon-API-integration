@@ -1,0 +1,116 @@
+_format_version: "3.0"
+_transform: true
+
+# Services
+services:
+  - name: card-service
+    url: http://card-service:8000
+    routes:
+      - name: card-service-pokemon-list
+        paths:
+          - /api/pokemon
+        methods:
+          - GET
+          - POST
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-pokemon-detail
+        paths:
+          - ~/api/pokemon/[^/]+
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-compare
+        paths:
+          - /api/compare
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-types
+        paths:
+          - /api/types
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-abilities
+        paths:
+          - /api/abilities
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-evolution
+        paths:
+          - ~/api/evolution/[^/]+
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-coverage
+        paths:
+          - /api/coverage
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+      
+      - name: card-service-average
+        paths:
+          - /api/average
+        methods:
+          - GET
+          - OPTIONS
+        strip_path: false
+        preserve_host: false
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+            - PATCH
+          headers:
+            - Accept
+            - Accept-Version
+            - Content-Length
+            - Content-MD5
+            - Content-Type
+            - Date
+            - Authorization
+            - X-Auth-Token
+          exposed_headers:
+            - X-Auth-Token
+          credentials: true
+          max_age: 3600
+      
+      - name: rate-limiting
+        config:
+          minute: 100
+          hour: 1000
+          policy: local
+      
+      - name: request-id
+        config:
+          header_name: X-Request-ID
+          echo_downstream: true
