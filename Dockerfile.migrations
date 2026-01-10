@@ -1,0 +1,35 @@
+# ============================================================================
+# Lightweight Dockerfile for Alembic Migrations
+# ============================================================================
+# Purpose: Run database migrations only (no application code needed)
+# Usage: docker compose up auth-migrations
+# ============================================================================
+
+FROM python:3.11-alpine
+
+WORKDIR /migrations
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    postgresql-client \
+    libpq
+
+# Install Alembic and database driver only
+RUN pip install --no-cache-dir \
+    alembic==1.13.0 \
+    psycopg2-binary==2.9.9 \
+    sqlalchemy==2.0.23
+
+# Copy migration files
+COPY ./alembic /migrations/alembic
+COPY ./alembic.ini /migrations/alembic.ini
+COPY ./app/db /migrations/app/db
+COPY ./app/models /migrations/app/models
+COPY ./app/__init__.py /migrations/app/__init__.py
+
+# Set environment
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Default command: run migrations
+CMD ["alembic", "upgrade", "head"]
