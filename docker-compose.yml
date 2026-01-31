@@ -53,7 +53,7 @@ services:
       KONG_PG_HOST: kong-database
       KONG_PG_USER: ${KONG_DATABASE_USER:-kong}
       KONG_PG_PASSWORD: ${KONG_DATABASE_PASSWORD:-kong}
-      KONG_PG_DATABASE: ${KONG_DATABASE_NAME:-kong}
+      KONG_PG_DATABASE: ${KONG_DATABASE_NAME:-kong}~
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
