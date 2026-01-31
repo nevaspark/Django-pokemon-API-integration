@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
     depends_on:
       kong-database:
-        condition: service_healthy
+        condition: service_healthy~
       kong-migration:
         condition: service_completed_successfully
     environment:
@@ -53,10 +53,9 @@ services:
       KONG_PG_HOST: kong-database
       KONG_PG_USER: ${KONG_DATABASE_USER:-kong}
       KONG_PG_PASSWORD: ${KONG_DATABASE_PASSWORD:-kong}
-      KONG_PG_DATABASE: ${KONG_DATABASE_NAME:-kong}
+      KONG_PG_DATABASE: ${KONG_DATABASE_NAME:-kong}~
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_ADMIN_GUI_URL: http://localhost:8002
