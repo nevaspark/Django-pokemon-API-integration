@@ -1,7 +1,14 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.conf import settings
+import logging
 from . import services
+from .utils import (
+    validate_pokemon_name, validate_team_names, validate_page_number,
+    validate_page_size, sanitize_query_param, log_api_request, handle_api_errors
+)
+
+logger = logging.getLogger(__name__)
 
 def _card(p):
     image = p.get("sprites", {}).get("other", {}).get("official-artwork", {}).get("front_default") or             p.get("sprites", {}).get("front_default")
@@ -25,13 +32,15 @@ def _err(message, status=502, hint=None):
     return JsonResponse(payload, status=status)
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def pokemon_index(request):
     try:
-        q = request.GET.get("q")
-        type_name = request.GET.get("type")
-        ability_name = request.GET.get("ability")
-        page = int(request.GET.get("page", "1"))
-        page_size = int(request.GET.get("page_size", settings.PAGE_SIZE))
+        q = sanitize_query_param(request.GET.get("q"))
+        type_name = sanitize_query_param(request.GET.get("type"))
+        ability_name = sanitize_query_param(request.GET.get("ability"))
+        page = validate_page_number(request.GET.get("page", "1"))
+        page_size = validate_page_size(request.GET.get("page_size", str(settings.PAGE_SIZE)))
 
         if type_name:
             data = services.filter_pokemon_by_type(type_name, page=page, page_size=page_size)
@@ -60,8 +69,11 @@ def pokemon_index(request):
         return _err(f"Unexpected error: {e}", status=500)
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def pokemon_detail(request, identifier):
     try:
+        identifier = validate_pokemon_name(identifier) if isinstance(identifier, str) else str(identifier)
         p = services.get_pokemon(identifier)
         species = services.get_pokemon_species(identifier)
         evo = services.get_evolution_chain_by_pokemon(identifier)
@@ -77,65 +89,92 @@ def pokemon_detail(request, identifier):
             "evolution": {"names": evo_names},
         })
     except services.PokeAPIError as e:
+        logger.warning(f"PokeAPI error for {identifier}: {e}")
         return _err(str(e), hint="Double-check the name or ID.")
     except Exception as e:
+        logger.error(f"Unexpected error for {identifier}: {e}", exc_info=True)
         return _err(f"Unexpected error: {e}", status=500)
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def compare_api(request):
-    a = request.GET.get("a")
-    b = request.GET.get("b")
+    a = sanitize_query_param(request.GET.get("a"))
+    b = sanitize_query_param(request.GET.get("b"))
     if not a or not b:
+        logger.warning(f"Missing parameters in compare API: a={a}, b={b}")
         return _err("Provide a and b query params", status=400)
     try:
-        pa = services.get_pokemon(a)
-        pb = services.get_pokemon(b)
+        a_name = validate_pokemon_name(a)
+        b_name = validate_pokemon_name(b)
+        pa = services.get_pokemon(a_name)
+        pb = services.get_pokemon(b_name)
         return _ok({"a": _card(pa), "b": _card(pb)})
     except services.PokeAPIError as e:
+        logger.warning(f"Compare API error: {e}")
         return _err(str(e))
     except Exception as e:
+        logger.error(f"Unexpected error in compare API: {e}", exc_info=True)
         return _err(f"Unexpected error: {e}", status=500)
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def types_api(request):
     try:
         t = services.get_types()
         return _ok(t)
     except Exception as e:
+        logger.error(f"Types API error: {e}")
         return _err(str(e))
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def abilities_api(request):
     try:
         names = services.get_all_abilities()
         return _ok({"count": len(names), "results": names})
     except Exception as e:
+        logger.error(f"Abilities API error: {e}")
         return _err(str(e))
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def evolution_api(request, identifier):
     try:
+        identifier = validate_pokemon_name(identifier) if isinstance(identifier, str) else str(identifier)
         evo = services.get_evolution_chain_by_pokemon(identifier)
         return _ok({"names": services.evo_chain_names(evo)})
     except Exception as e:
+        logger.error(f"Evolution API error for {identifier}: {e}")
         return _err(str(e))
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def coverage_api(request):
-    team = request.GET.get("team", "")
+    team = sanitize_query_param(request.GET.get("team", ""))
     names = [x.strip() for x in team.split(",") if x.strip()]
     try:
-        summary = services.team_coverage(names[:6])
-        return _ok({"team": names[:6], "coverage": summary})
+        validated_names = validate_team_names(names)
+        summary = services.team_coverage(validated_names[:6])
+        return _ok({"team": validated_names[:6], "coverage": summary})
     except Exception as e:
+        logger.error(f"Coverage API error: {e}")
         return _err(str(e))
 
 @require_GET
+@log_api_request
+@handle_api_errors
 def average_api(request):
-    team = request.GET.get("team", "")
-    names = [x.strip() for x in team.split(",") if x.strip()][:6]
+    team = sanitize_query_param(request.GET.get("team", ""))
+    names = [x.strip() for x in team.split(",") if x.strip()]
     try:
-        avg = services.average_stats(names)
-        return _ok({"team": names, "average_stats": avg})
+        validated_names = validate_team_names(names)
+        avg = services.average_stats(validated_names)
+        return _ok({"team": validated_names, "average_stats": avg})
     except Exception as e:
+        logger.error(f"Average API error: {e}")
         return _err(str(e))

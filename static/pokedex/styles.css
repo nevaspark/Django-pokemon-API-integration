@@ -1,28 +1,358 @@
 :root{
   --bg1:#0d0b2e; --bg2:#151a4a; --bg3:#0a2a43;
   --accent:#7c3aed; --accent2:#22d3ee; --accent3:#34d399;
+  --accent4:#f59e0b; --accent5:#ef4444;
   --btn-bg: linear-gradient(135deg, var(--accent), var(--accent2));
+  --card-bg: rgba(255,255,255,0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --border-color: rgba(255,255,255,0.1);
 }
+
 body.animated-bg{
-  min-height: 100vh; color: #fff;
+  min-height: 100vh; color: var(--text-primary);
   background: linear-gradient(120deg, var(--bg1), var(--bg2), var(--bg3));
   background-size: 200% 200%; animation: bgShift 18s ease infinite;
   position: relative; overflow-x: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
 body.animated-bg::before, body.animated-bg::after{
   content:""; position:absolute; width: 42vmax; height: 42vmax; border-radius: 50%;
   filter: blur(60px); opacity:.25; z-index:-1;
 }
 body.animated-bg::before{ background: var(--accent); top:-10vmax; left:-10vmax; animation: float1 24s ease-in-out infinite; }
 body.animated-bg::after{ background: var(--accent2); bottom:-12vmax; right:-12vmax; animation: float2 26s ease-in-out infinite; }
+
 @keyframes bgShift{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 @keyframes float1{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(8vmax,6vmax)} }
 @keyframes float2{ 0%,100%{transform:translate(0,0)} 50%{transform:translate(-6vmax,-8vmax)} }
-.navbar{ background: transparent; }
-.navbar .navbar-brand{ color:#fff; }
-.btn-primary{ background: var(--btn-bg); border: none; color: #fff; }
-.btn-outline-light{ border-color: rgba(255,255,255,.7); color:#fff; }
-.btn-outline-light:hover{ background: rgba(255,255,255,.15); }
-.glass a, a { color: inherit; text-decoration: none; }
-.glass:hover { transform: translateY(-2px); transition: .2s ease; }
-.progress-bar { background-image: linear-gradient(90deg, var(--accent2), var(--accent3)); }
+
+/* Enhanced Glass Effect */
+.glass { 
+  background: var(--card-bg); 
+  border-radius: 20px; 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25); 
+  backdrop-filter: blur(10px); 
+  border: 1px solid var(--border-color); 
+  transition: all 0.3s ease;
+}
+
+.glass:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 15px 40px rgba(0,0,0,0.35); 
+}
+
+/* Navigation */
+.navbar{ 
+  background: transparent; 
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.navbar .navbar-brand{ 
+  color: var(--text-primary); 
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.navbar .navbar-brand:hover {
+  color: var(--accent2);
+}
+
+/* Buttons */
+.btn-primary{ 
+  background: var(--btn-bg); 
+  border: none; 
+  color: var(--text-primary); 
+  border-radius: 12px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover { 
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
+}
+
+.btn-outline-light{ 
+  border-color: var(--border-color); 
+  color: var(--text-primary); 
+  border-radius: 12px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover{ 
+  background: var(--card-bg); 
+  border-color: var(--accent2);
+  color: var(--accent2);
+}
+
+/* Links */
+.glass a, a { 
+  color: inherit; 
+  text-decoration: none; 
+  transition: color 0.2s ease;
+}
+
+.glass a:hover, a:hover {
+  color: var(--accent2);
+}
+
+/* Progress Bars */
+.progress-bar { 
+  background-image: linear-gradient(90deg, var(--accent2), var(--accent3)); 
+  border-radius: 10px;
+}
+
+/* Pokemon Cards */
+.pokemon-card {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.pokemon-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.pokemon-image {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.pokemon-card:hover .pokemon-image {
+  transform: scale(1.1);
+}
+
+/* Type Badges */
+.type-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin: 0.25rem;
+  display: inline-block;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.type-badge:hover {
+  transform: scale(1.05);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.type-normal { background: #A8A878; }
+.type-fire { background: #F08030; }
+.type-water { background: #6890F0; }
+.type-electric { background: #F8D030; }
+.type-grass { background: #78C850; }
+.type-ice { background: #98D8D8; }
+.type-fighting { background: #C03028; }
+.type-poison { background: #A040A0; }
+.type-ground { background: #E0C068; }
+.type-flying { background: #A890F0; }
+.type-psychic { background: #F85888; }
+.type-bug { background: #A8B820; }
+.type-rock { background: #B8A038; }
+.type-ghost { background: #705898; }
+.type-dragon { background: #7038F8; }
+.type-dark { background: #705848; }
+.type-steel { background: #B8B8D0; }
+.type-fairy { background: #EE99AC; }
+
+/* Stats Display */
+.stat-bar {
+  height: 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s ease;
+  background: linear-gradient(90deg, var(--accent2), var(--accent3));
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent2);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar .navbar-brand {
+    font-size: 1.25rem;
+  }
+  
+  .btn-primary, .btn-outline-light {
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .glass {
+    border-radius: 16px;
+    padding: 1rem;
+  }
+  
+  .pokemon-image {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .type-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar .d-flex {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .glass {
+    border-radius: 12px;
+    margin: 0.5rem 0;
+  }
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slideIn 0.6s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Enhanced Forms */
+.form-control {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  background: var(--card-bg);
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 0.2rem rgba(34, 211, 238, 0.25);
+  color: var(--text-primary);
+}
+
+.form-control::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Tables */
+.table-dark {
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-dark th {
+  border-color: var(--border-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.table-dark td {
+  border-color: var(--border-color);
+  vertical-align: middle;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 12px;
+  border: none;
+  backdrop-filter: blur(10px);
+}
+
+.alert-trans { 
+  background: rgba(255, 76, 76, 0.14); 
+  color: #ffdede; 
+  border: 1px solid rgba(255, 76, 76, 0.35); 
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--border-color);
+  margin-top: 3rem;
+}
+
+/* Utility Classes */
+.text-gradient {
+  background: var(--btn-bg);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent2);
+}

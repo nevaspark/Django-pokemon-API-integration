@@ -1,7 +1,16 @@
 from django.shortcuts import render, redirect
 from django.conf import settings
+import logging
 from . import services
+from .utils import (
+    validate_pokemon_name, validate_team_names, validate_page_number, 
+    validate_page_size, sanitize_query_param, log_api_request, handle_api_errors
+)
 
+logger = logging.getLogger(__name__)
+
+@log_api_request
+@handle_api_errors
 def pokemon_list(request):
     error = None
     try:
@@ -11,11 +20,11 @@ def pokemon_list(request):
         types, abilities = [], []
         error = f"Failed to load filter lists: {e}"
 
-    q = request.GET.get("q")
-    type_name = request.GET.get("type")
-    ability = request.GET.get("ability")
-    page = int(request.GET.get("page", "1"))
-    page_size = int(request.GET.get("page_size", settings.PAGE_SIZE))
+    q = sanitize_query_param(request.GET.get("q"))
+    type_name = sanitize_query_param(request.GET.get("type"))
+    ability = sanitize_query_param(request.GET.get("ability"))
+    page = validate_page_number(request.GET.get("page", "1"))
+    page_size = validate_page_size(request.GET.get("page_size", str(settings.PAGE_SIZE)))
 
     try:
         if type_name:
@@ -53,13 +62,17 @@ def pokemon_list(request):
         "total": total, "error": error,
     })
 
+@log_api_request
+@handle_api_errors
 def pokemon_detail(request, identifier):
     error = None
     try:
+        identifier = validate_pokemon_name(identifier) if isinstance(identifier, str) else str(identifier)
         pokemon = services.get_pokemon(identifier)
         species = services.get_pokemon_species(identifier)
         evolution_names = services.evo_chain_names(services.get_evolution_chain_by_pokemon(identifier))
     except Exception as e:
+        logger.error(f"Failed to load Pokemon {identifier}: {e}")
         pokemon, species, evolution_names = None, None, []
         error = f"Could not load Pokémon: {e}"
 
@@ -84,19 +97,24 @@ def pokemon_detail(request, identifier):
 #         error = f"Compare failed: {e}"
 #     return render(request, "pokedex/compare.html", {"a": pa, "b": pb, "a_name": a, "b_name": b, "error": error})
 def compare_view(request):
-    a_name = (request.GET.get("a") or "pikachu").strip()
-    b_name = (request.GET.get("b") or "bulbasaur").strip()
+    a_name = sanitize_query_param(request.GET.get("a") or "pikachu")
+    b_name = sanitize_query_param(request.GET.get("b") or "bulbasaur")
 
     error = None
     try:
+        a_name = validate_pokemon_name(a_name)
         a = services.get_pokemon(a_name)
     except Exception as e:
         a, error = None, f"Couldn't load {a_name}: {e}"
+        logger.warning(f"Failed to load Pokemon A: {a_name} - {e}")
+    
     try:
+        b_name = validate_pokemon_name(b_name)
         b = services.get_pokemon(b_name)
     except Exception as e:
         b = None
         error = (error + " | " if error else "") + f"Couldn't load {b_name}: {e}"
+        logger.warning(f"Failed to load Pokemon B: {b_name} - {e}")
 
     # 👉 pass a real list to the template
     pair = [p for p in (a, b) if p]
@@ -107,31 +125,49 @@ def compare_view(request):
         {"pair": pair, "a_name": a_name, "b_name": b_name, "error": error},
     )
 
+@log_api_request
+@handle_api_errors
 def coverage_view(request):
-    team = request.GET.get("team", "pikachu,bulbasaur,charizard")
-    names = [x.strip() for x in team.split(",") if x.strip()][:6]
+    team_param = request.GET.get("team", "pikachu,bulbasaur,charizard")
+    names = [x.strip() for x in team_param.split(",") if x.strip()]
     error = None
+    
     try:
-        summary = services.team_coverage(names)
+        validated_names = validate_team_names(names)
+        summary = services.team_coverage(validated_names)
     except Exception as e:
+        logger.error(f"Coverage calculation failed: {e}")
         summary = {}
         error = f"Coverage failed: {e}"
-    return render(request, "pokedex/coverage.html", {"team": names, "summary": summary, "error": error})
+        validated_names = names[:6]
+    
+    return render(request, "pokedex/coverage.html", {"team": validated_names, "summary": summary, "error": error})
 
+@log_api_request
+@handle_api_errors
 def average_view(request):
-    team = request.GET.get("team", "pikachu,bulbasaur,charizard")
-    names = [x.strip() for x in team.split(",") if x.strip()][:6]
+    team_param = request.GET.get("team", "pikachu,bulbasaur,charizard")
+    names = [x.strip() for x in team_param.split(",") if x.strip()]
     error = None
+    
     try:
-        avg = services.average_stats(names)
+        validated_names = validate_team_names(names)
+        avg = services.average_stats(validated_names)
     except Exception as e:
+        logger.error(f"Average stats calculation failed: {e}")
         avg = {}
         error = f"Average calc failed: {e}"
-    return render(request, "pokedex/average.html", {"team": names, "avg": avg, "error": error})
+        validated_names = names[:6]
+    
+    return render(request, "pokedex/average.html", {"team": validated_names, "avg": avg, "error": error})
 
+@log_api_request
+@handle_api_errors
 def evolution_view(request, identifier):
     try:
+        identifier = validate_pokemon_name(identifier) if isinstance(identifier, str) else str(identifier)
         evo = services.get_evolution_chain_by_pokemon(identifier)
     except Exception as e:
+        logger.error(f"Failed to load evolution chain for {identifier}: {e}")
         evo = {"error": str(e)}
     return render(request, "pokedex/evolution.html", {"evo": evo})
